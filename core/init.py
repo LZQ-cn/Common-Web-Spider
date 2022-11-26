@@ -41,7 +41,10 @@ class Initializer(object):
     def check_db(self) -> int:
         """
         检查默认数据表是否存在 (不存在则创建)
+<<<<<<< HEAD
 
+=======
+>>>>>>> a8032cce5c7b359aaa35296abd694b17066a25e1
         调用类中变量: self.s_DataBasePath, self.d_DataTables
         返回: int (返回检查的表的数量)
         """
@@ -76,7 +79,10 @@ class Initializer(object):
     def show_menu(self) -> None:
         """
         以 self.d_Abilities 为基, 输出当前程序功能
+<<<<<<< HEAD
 
+=======
+>>>>>>> a8032cce5c7b359aaa35296abd694b17066a25e1
         调用类中变量: self.d_Abilities
         无返回
         """
@@ -86,7 +92,10 @@ class Initializer(object):
     def show_configure(self) -> None:
         """
         输出本类的变量
+<<<<<<< HEAD
 
+=======
+>>>>>>> a8032cce5c7b359aaa35296abd694b17066a25e1
         调用类中变量: self.__init__() 中定义的全部变量
         无返回
         """
@@ -106,5 +115,4 @@ class Initializer(object):
 a = Initializer()
 a.check_db()
 a.show_configure()
-
 # TODO: 新建一个 db_setter.py 文件, 并创建一个 DBSetter 类, 用于操控和管理数据库 (将 Initializer.check_db() 在其中实现)
