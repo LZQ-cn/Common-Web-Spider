@@ -87,10 +87,7 @@ class DataBaseSetter:
         """
         result: Any = None
 
-        if not self.__connected:
-            return False
-
-        else:
+        if self.__connected:
             try:
                 self.__cur.execute(_command)
             except Exception as e:
@@ -98,8 +95,11 @@ class DataBaseSetter:
             else:
                 result = True
 
-        self.__history[_command] = result if isinstance(result, bool) else False
-        
+            self.__history[_command] = result if isinstance(result, bool) else False
+       
+       else:
+           result = False
+
         return result
 
     def fetch(self, _command: str = "") -> list:
