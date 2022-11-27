@@ -15,6 +15,7 @@ class Spider:
     """
     爬虫类
     """
+
     """
     使用 self.add_urls() 函数来添加要爬取的网址, 
     使用 self.change_processes() 函数来更改要开启的进程数量
@@ -31,8 +32,15 @@ class Spider:
         self.__process_num: int = 1         # 开启的进程数量
         self.__process_list: list = list()  # 开启的进程列表
 
+        self.__default_header: dict = None  # 默认网络请求头
+        self.__default_ip: str = None       # 默认网络 IP
+
+        self.__history_path: str = None     # 爬取历史保存路径
+        self.__history: dict = dict()       # 爬取网站历史
+
         self.__save_dir: str = None         # .html 文件的保存目录
         self.__save_file: str = None        # .html 文件的保存名
+        self.__file_count: int = 1          # 文件名索引 (计数)
 
         """ 初始化变量 """
         self.init()
@@ -42,10 +50,23 @@ class Spider:
         初始化类中变量
         """
         _db_setter: DBSetter = DBSetter("ini%sdefault.db" % PathSeparator)
-
         _defaults: tuple = _db_setter.fetch("SELECT * FROM ini")[0]
 
-        print(_defaults)
+        self.__save_dir = _defaults[0]
+        self.__save_file = _defaults[1]
+        self.__default_header = _defaults[2]
+        self.__default_ip = _defaults[3]
+        self.__history_path = _defaults[4]
+
+        _if_change: str = _db_setter.fetch("SELECT change_spider_ini FROM echo")[0][0]
+        if _if_change == "TRUE":    # 询问是否修改默认配置
+            pass
+        
+        else:
+            pass
+
+        print(_if_change)
+
 
     def change_processes(self, _num: int) -> bool:
         """
@@ -104,3 +125,6 @@ class Spider:
         return self.__process_num
 
     """ END"""
+
+
+spider = Spider()
