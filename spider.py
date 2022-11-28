@@ -49,111 +49,76 @@ class Spider:
         """ 将网址添加进网址列表 """
         self.add_urls(_urls=_urls)
 
-    def __change_ini(self) -> None:
+    def __init(self) -> bool:
         """
-        更改爬取的默认配置
-        """
-        _options = {
-            1: ".html 文件保存目录",
-            2: ".html 文件名称",
-            3: "请求头",
-            4: "请求 IP"
-        }
-        _temp: str
+        初始化默认参数, 将会初始化:
+            self.__save_dir | self.__save_file
+            self.__default_header | self.__default_ip
+            self.__history_path
 
-        print("\n请您输入索引以修改对应的值: \n")
-        for _key in _options:
-            print("%d -- %s" % (_key, _options[_key]))
-
-        print("\n您的输入: ")
-
-        _change: int = _os.get_int(_prompt="请正确输入: ")
-        while True:
-            _status: Any = None
-
-            if _change < 1 or _change > 4:
-                print("请正确输入: ")
-                continue
-
-            if _change == 1:
-                print("您当前默认 %s 为: [%s]\n您想将其修改为什么: " 
-                        % (_options[_change], self.__save_dir))
-                _temp = _os.get_str()
-
-                if not _os._mkdir(_temp):
-                    print("无法将%s设置为 [%s]\n")
-                    _status = False
-                else:
-                    self.__save_dir = _temp
-                    _status = True
-
-            elif _change == 2:
-                print("\n您当前默认%s为: [%s]\n您想将其修改为什么: " 
-                        % (_options[_change], self.__save_file))
-                _temp = _os.get_str()
-
-                if "%%d" not in _temp:
-                    print("您应该在文件命中添加索引以防止文件被覆盖哦, 索引请用%%d代替")
-                    _status = False
-                else:
-                    self.__save_file = _temp
-                    _status = True
-
-            elif _change == 3:
-                print("\n您当前默认%s为: [%s]\n您想将其修改为什么: " 
-                        % (_options[_change], self.__default_header))
-                _temp = _os.get_str()
-
-                self.__default_header = _temp
-                _status = True
-
-            else:
-                print("\n您当前默认%s为: [%s]\n您想将其修改为什么: " 
-                        % (_options[_change], self.__default_ip))
-                _temp = _os.get_str()
-
-                self.__default_ip = _temp
-                _status = True
-
-            if _status:
-                print("\n修改完毕\n您接下来想要修改什么 (什么也不输入并按下回车以退出): ")
-            
-            else:
-                print("\n那么您现在想修改什么呢 (什么也不输入并按下回车以退出): ")
-
-            _change = input("")
-
-            if not _change:
-                break
-            else:
-                pass
-
-            _change = _os.get_int("请正确输入: ")
-
-    def __init(self) -> None:
-        """
-        初始化 self.__save_dir, self.__save_file,
-              self.__default_header, self.__default_ip,
-              self.__history_path
+        返回: 初始化成功则返回 True, 失败返回 False (失败一般是由数据库确实所导致)
         """
         _db_setter: DataBaseSetter = DataBaseSetter("ini%sdefault.db" % _os.PathSeparator)
+        _status: bool = None
 
-        _defaults: tuple = _db_setter.fetch("SELECT * FROM ini")[0]
+        """ 初始化默认参数 """
+        if _db_setter.connected:    # 连接成功
+            _defaults: tuple = _db_setter.fetch("SELECT * FROM ini")[0]
 
-        """ self.__save_dir 和 self.__save_file """
-        self.__save_dir = _defaults[0]
-        self.__save_file = _defaults[1]
+            self.__save_dir = _defaults[0]
+            self.__save_file = _defaults[1]
 
-        """ self.__default_header 和 self.__default_ip """
-        self.__default_header = _defaults[2]
-        self.__default_ip = _defaults[3]
+            self.__default_header = _defaults[2]
+            self.__default_ip = _defaults[3]
 
-        """ self.__history_path """
-        self.__history_path = _defaults[4]
-        
-        _change = input("您要修改您当前的默认配置吗: [Yes/No (Yes)]").strip().lower()
-        if not _change == 'no':
-            self.__change_ini()
+            self.__history_path = _defaults[4]
+
+            _status = True
+
+        else:                       # 连接失败
+            _status = False
+
+        """ 让用户更改默认参数 """
+        _if_change: str = _db_setter.fetch("SELECT change_spider_ini FROM echo")[0][0]
+
+        if _if_change == "TRUE":
+            _default_opition: str = _db_setter.fetch("SELECT change_spider_ini FROM default_opition")[0][0]
+            print("您想要修改默认配置项吗? (yes/no [%s]) (如果您以后不希望看到此消息, 请输入 [turn-off])" % _default_opition)
+
+            _change: str = _os.get_answer({"yes": '1', "no": '2', "turn-off": '3'}, 0)
+            if _change == '1':
+                self.__change_default()
+
+            elif _change == '2':
+                pass
+
+            elif _change == '3':
+                print("已经关闭对于 是否修改默认配置项 的提示, 若您以后想重新打开此提示, 请在菜单界面的 Settings 界面查找")
+                _db_setter.execute("UPDATE echo SET change_spider_ini='FALSE'")
+
+            else:
+                print("您的输入并非 [yes] 或 [no], 我们默认您输入了 [%s] (若您想修改此默认, 请在菜单界面的 Settings 界面查找) \n" % _default_opition)
+                if _default_opition == "yes":
+                    self.__change_default()
+
+        _db_setter.close_db()
+
+        return _status
+
+    def __change_default(self) -> None:
+        """
+        修改默认配置
+        """
+        _db_setter: DataBaseSetter = DataBaseSetter("ini%sdefault.db" % _os.PathSeparator)
+        _inis: tuple = _db_setter.fetch("SELECT * FROM ini")[0]
+        _names: tuple = (".html 文件保存路径", ".html 文件保存名称", "爬虫请求头", "爬虫 IP")
+        _dict: dict = dict(zip(_names, _inis))
+        _index: int = 1
+
+        print("请输入对应数字以修改对应配置\n")
+        for _name in _dict:
+            print("%d -- %s" % (_index, _name))
+            _index += 1
 
     def add_urls(self, _urls: Iterable) -> None:
         """
@@ -164,5 +129,4 @@ class Spider:
 
         self.__url_num = self.__urls.qsize()
 
-    
 spider = Spider()

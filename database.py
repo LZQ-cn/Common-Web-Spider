@@ -60,6 +60,7 @@ class DataBaseSetter:
             self.__con = _con
             self.__cur = self.__con.cursor()
 
+            self.__path = _path
             self.__connected = True
 
     def close_db(self, _commit: bool = True) -> None:
@@ -77,6 +78,7 @@ class DataBaseSetter:
         self.__cur.close()
         self.__con.close()
 
+        self.__path = None
         self.__connected = False
 
     def execute(self, _command: str) -> Any:
@@ -97,7 +99,7 @@ class DataBaseSetter:
 
             self.__history[_command] = result if isinstance(result, bool) else False
        
-       else:
+        else:
            result = False
 
         return result
@@ -115,6 +117,27 @@ class DataBaseSetter:
             self.execute(_command=_command)
 
         return self.__cur.fetchall()
+
+    def commit(self) -> bool:
+        """
+        提交当前更改
+
+        当 self.__connected 为 False 时(即没有连接到数据库), 或提交失败则返回 False, 成功返回 True
+        """
+        _status: bool = None
+
+        if not self.__connected:
+            _status = False
+
+        else:
+            try:
+                self.__con.commit()  
+            except:
+                _status = False
+            else:
+                _status = True
+
+        return _status
 
     """ self.__history """
     @property
