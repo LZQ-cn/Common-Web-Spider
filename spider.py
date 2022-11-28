@@ -1,3 +1,4 @@
+import urllib.request
 from _os import PathSeparator
 from collections.abc import Iterable
 from multiprocessing import Process, Queue
@@ -25,48 +26,44 @@ class Spider:
         """
         初始化变量为默认值
         """
-        self.__urls_temp: list = list()     # 网站缓存 (用户添加的带爬取网站将会在此存放, 当用户调用 self.start() 函数后放入 self.__urls)
-        self.__urls: Queue = Queue()        # 将爬取的网站
-        self.__url_num: int = 0             # 要爬取的网站数量
+        self.__urls_temp: list = list()                                     # 网站缓存 (用户添加的带爬取网站将会在此存放, 当用户调用 self.start() 函数后放入 self.__urls)
+        self.__urls: Queue = Queue()                                        # 将爬取的网站
+        self.__url_num: int = 0                                             # 要爬取的网站数量
 
-        self.__process_num: int = 1         # 开启的进程数量
-        self.__process_list: list = list()  # 开启的进程列表
+        self.__process_num: int = 1                                         # 开启的进程数量
+        self.__process_list: list = list()                                  # 开启的进程列表
 
-        self.__default_header: dict = None  # 默认网络请求头
-        self.__default_ip: str = None       # 默认网络 IP
+        self.__default_header: dict = ...                                   # 默认网络请求头
+        self.__default_ip: str = ...                                        # 默认网络 IP
 
-        self.__history_path: str = None     # 爬取历史保存路径
-        self.__history: dict = dict()       # 爬取网站历史
+        self.__history_path: str = "history%shistory.db" % PathSeparator    # 爬取历史保存路径
+        self.__history: dict = dict()                                       # 爬取网站历史
 
-        self.__save_dir: str = None         # .html 文件的保存目录
-        self.__save_file: str = None        # .html 文件的保存名
-        self.__file_count: int = 1          # 文件名索引 (计数)
+        self.__save_dir: str = "result"                                     # .html 文件的保存目录
+        self.__save_file: str = "%d.html"                                   # .html 文件的保存名
+        self.__file_count: int = 1                                          # 文件名索引 (计数)
 
-        """ 初始化变量 """
-        self.init()
-
-    def init(self) -> None:
+    def __add_urls(self) -> None:
         """
-        初始化类中变量
+        将网站缓存 (self.__urls_temp) 中的网站添加到带爬取网站列表 (self.__urls) 中,
+            并刷新带爬取的网站数量 (self.__url_num)
         """
-        _db_setter: DBSetter = DBSetter("ini%sdefault.db" % PathSeparator)
-        _defaults: tuple = _db_setter.fetch("SELECT * FROM ini")[0]
+        for _url in self.__urls_temp:
+            self.__urls.put_nowait(_url)
 
-        self.__save_dir = _defaults[0]
-        self.__save_file = _defaults[1]
-        self.__default_header = _defaults[2]
-        self.__default_ip = _defaults[3]
-        self.__history_path = _defaults[4]
+        self.__url_num = self.__urls.qsize()
 
-        _if_change: str = _db_setter.fetch("SELECT change_spider_ini FROM echo")[0][0]
-        if _if_change == "TRUE":    # 询问是否修改默认配置
-            pass
-        
-        else:
-            pass
+    def start(self) -> None:
+        """
+        开始爬取网站
+        """
+        self.__add_urls()
 
-        print(_if_change)
+        for _count in range(self.__process_num):
+            self.__process_list.append(Process(target=self.__requests, name="Process-%d" % _count))
 
+        for _process in self.__process_list:
+            _process.start()
 
     def change_processes(self, _num: int) -> bool:
         """
