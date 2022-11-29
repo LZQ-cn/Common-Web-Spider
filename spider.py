@@ -49,62 +49,6 @@ class Spider:
         """ 将网址添加进网址列表 """
         self.add_urls(_urls=_urls)
 
-    def __init(self) -> bool:
-        """
-        初始化默认参数, 将会初始化:
-            self.__save_dir | self.__save_file
-            self.__default_header | self.__default_ip
-            self.__history_path
-
-        返回: 初始化成功则返回 True, 失败返回 False (失败一般是由数据库确实所导致)
-        """
-        _db_setter: DataBaseSetter = DataBaseSetter("ini%sdefault.db" % _os.PathSeparator)
-        _status: bool = None
-
-        """ 初始化默认参数 """
-        if _db_setter.connected:    # 连接成功
-            _defaults: tuple = _db_setter.fetch("SELECT * FROM ini")[0]
-
-            self.__save_dir = _defaults[0]
-            self.__save_file = _defaults[1]
-
-            self.__default_header = _defaults[2]
-            self.__default_ip = _defaults[3]
-
-            self.__history_path = _defaults[4]
-
-            _status = True
-
-        else:                       # 连接失败
-            _status = False
-
-        """ 让用户更改默认参数 """
-        _if_change: str = _db_setter.fetch("SELECT change_spider_ini FROM echo")[0][0]
-
-        if _if_change == "TRUE":
-            _default_opition: str = _db_setter.fetch("SELECT change_spider_ini FROM default_opition")[0][0]
-            print("您想要修改默认配置项吗? (yes/no [%s]) (如果您以后不希望看到此消息, 请输入 [turn-off])" % _default_opition)
-
-            _change: str = _os.get_answer({"yes": '1', "no": '2', "turn-off": '3'}, 0)
-            if _change == '1':
-                self.__change_default()
-
-            elif _change == '2':
-                pass
-
-            elif _change == '3':
-                print("已经关闭对于 是否修改默认配置项 的提示, 若您以后想重新打开此提示, 请在菜单界面的 Settings 界面查找")
-                _db_setter.execute("UPDATE echo SET change_spider_ini='FALSE'")
-
-            else:
-                print("您的输入并非 [yes] 或 [no], 我们默认您输入了 [%s] (若您想修改此默认, 请在菜单界面的 Settings 界面查找) \n" % _default_opition)
-                if _default_opition == "yes":
-                    self.__change_default()
-
-        _db_setter.close_db()
-
-        return _status
-
     def __change_default(self) -> None:
         """
         修改默认配置
