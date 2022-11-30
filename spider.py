@@ -147,6 +147,7 @@ class Spider:
     """ END """
 
     """ self.__process_num """
+    @property
     def process_num(self) -> int:
         return self.__process_num
 
