@@ -25,7 +25,7 @@ class Spider:
         """
         初始化变量为默认值
         """
-        self.__urls_temp: list = list()                                     # 网站缓存 (用户添加的带爬取网站将会在此存放, 当用户调用 self.start() 函数后放入 self.__urls)
+        self.__urls_temp: list = list()                                     # 网站缓存 (用户添加的待爬取网站将会在此存放, 当用户调用 self.start() 函数后放入 self.__urls)
         self.__urls: Queue = Queue()                                        # 将爬取的网站
         self.__url_num: int = 0                                             # 要爬取的网站数量
 
@@ -51,12 +51,13 @@ class Spider:
         """
         for _url in self.__urls_temp:
             self.__urls.put_nowait(_url)
+            self.del_urls(_urls=(_url, ))
 
         self.__url_num = self.__urls.qsize()
 
     def __get_file(self) -> str:
         """
-        将 self.__save_file 用 self.__file_count 格式化, 并将self.__ file_count 自增 (在读取过程中, 锁住进程锁)
+        将 self.__save_file 用 self.__file_count 格式化后返回, 并将self.__ file_count 自增 (在读取过程中, 锁住进程锁, 读取后释放)
         """
         self.__file_lock.acquire()
 
