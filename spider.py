@@ -1,8 +1,7 @@
 import urllib.request
 from _os import PathSeparator
 from collections.abc import Iterable
-from multiprocessing import Process, Queue
-from database import DataBaseSetter as DBSetter
+from multiprocessing import Process, Queue, Lock
 
 
 def to_https(_url: str) -> str:
@@ -41,6 +40,8 @@ class Spider:
 
         self.__save_dir: str = "result"                                     # .html 文件的保存目录
         self.__save_file: str = "%d.html"                                   # .html 文件的保存名
+
+        self.__file_lock: Lock = Lock()                                     # 文件名锁, 使每次储存网站源代码的文件不混乱
         self.__file_count: int = 1                                          # 文件名索引 (计数)
 
     def __add_urls(self) -> None:
@@ -53,9 +54,36 @@ class Spider:
 
         self.__url_num = self.__urls.qsize()
 
+    def __get_file(self) -> str:
+        """
+        将 self.__save_file 用 self.__file_count 格式化, 并将self.__ file_count 自增 (在读取过程中, 锁住进程锁)
+        """
+        self.__file_lock.acquire()
+
+        _file_name: str = self.__save_file % self.__file_count
+        self.__file_count += 1
+
+        self.__file_lock.release()
+
+        return _file_name
+
+    def __requests(self) -> None:
+        """
+        爬取网站
+
+        每次从 self.__urls中获得一个网站并爬取, 并使用 self.__get_file() 函数获取一个文件名用于保存
+        """
+        while not self.__urls.empty():
+            _url: str = self.__urls.get_nowait()
+            _file_name: str = self.__get_file()
+
+            _requester: urllib.request.Request = urllib.request.Request(url=_url)
+
     def start(self) -> None:
         """
         开始爬取网站
+
+        当要爬取的网站数量为 0时, 则什么也不做
         """
         self.__add_urls()
 
