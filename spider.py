@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 import urllib.request
+from typing import Any
 from _os import PathSeparator
 from database import DataBaseSetter as DBSetter
 from multiprocessing import Process, Queue, Lock
@@ -9,7 +12,8 @@ def to_https(_url: str) -> str:
     如果 _url 以 [http://] 或 [https://] 结尾, 则返回 _url
         否则将其加上 https 后返回
     """
-    return _url if _url.startswith("https://") or _url.startwith("http://") else ("https://" + _url)
+    return _url if _url.startswith("https://") or _url.startswith("http://") else ("https://" + _url)
+
 
 class Spider:
     """
@@ -26,9 +30,10 @@ class Spider:
         初始化变量为默认值
         """
         self.__method: str = "GET"                                          # 网站请求方式
-        self.__data: dict = None                                            # POST 请求时的数据
+        self.__data: dict | None = None                                     # POST 请求时的数据
 
-        self.__urls_temp: list = list()                                     # 网站缓存 (用户添加的待爬取网站将会在此存放, 当用户调用 self.start() 函数后放入 self.__urls)
+        """ 网站缓存 (用户添加的待爬取网站将会在此存放, 当用户调用 self.start() 函数后放入 self.__urls) """
+        self.__urls_temp: list = list()
         self.__urls: Queue = Queue()                                        # 将爬取的网站
         self.__url_num: int = 0                                             # 要爬取的网站数量
 
@@ -36,7 +41,7 @@ class Spider:
         self.__process_list: list = list()                                  # 开启的进程列表
 
         self.__default_header: dict = {}                                    # 默认网络请求头
-        self.__default_ip: str = None                                       # 默认网络 IP
+        self.__default_ip: str | None = None                               # 默认网络 IP
 
         self.__history_path: str = "history%shistory.db" % PathSeparator    # 爬取历史保存路径
         self.__history: dict = dict()                                       # 爬取网站历史
@@ -95,7 +100,7 @@ class Spider:
                                                                             data=self.__data,
                                                                             method=self.__method,
                                                                             headers=self.__default_header)
-                _opener: urllib.request._UrlopenRet = urllib.request.urlopen(_requester)
+                _opener: Any = urllib.request.urlopen(_requester)
 
             except Exception as e:
                 _status = False
@@ -106,9 +111,8 @@ class Spider:
                     f.write(_opener.read().decode("utf-8"))
                 _status = True
 
-            finally:
-                self.__save_history(_url, _status)
-                self.__history_db.commit()
+            self.__save_history(_url, _status)
+            self.__history_db.commit()
 
     def start(self) -> None:
         """
@@ -133,7 +137,7 @@ class Spider:
 
         返回: 更改成功返回 True, 更改失败(如传入的 _num 小于零或 _num 大于要爬取的网站数量)
         """
-        _status: bool = None
+        _status: bool | None = None
 
         if _num < 0 or _num > self.__url_num:
             _status = False
@@ -183,7 +187,7 @@ class Spider:
         return self.__method
 
     @method.setter
-    def method(self, _method: str) ->None:
+    def method(self, _method: str) -> None:
         _method: str = _method.upper()
 
         if _method == "GET" or _method == "POST":

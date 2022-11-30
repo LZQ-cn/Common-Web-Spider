@@ -11,7 +11,7 @@ System: str = system()
 PathSeparator: str = '\\' if System == "Windows" else '/'
 
 
-def get_str(_prompt: str = "") -> None:
+def get_str(_prompt: str = "") -> str:
     """
     对用户输入执行 strip() 操作, 如果为空, 则输出 _prompt 并让用户重新输入, 后则返回 strip() 操作后的结果
     """
@@ -23,23 +23,24 @@ def get_str(_prompt: str = "") -> None:
     return _get
 
 
-def get_int(_prompt: str = "") -> None:
+def get_int(_prompt: str = "") -> int:
     """
     将用户输入转化为 int 类型值并返回
 
     _prompt: 当用户输入无法转化为 int 类型(如用户输入了字母)时输出的提示语
     """
-    _get: int = input("")
+    _get: str = input("")
+    _result: int
 
     while True:
         try:
-            _get = int(_get)
+            _result = int(_get)
         except ValueError:
             _get = input(_prompt)
         else:
             break
 
-    return _get
+    return _result
 
 
 def get_answer(_answers: dict, _not_in: int = 0, _prompt: str = "", 
@@ -74,7 +75,6 @@ def get_answer(_answers: dict, _not_in: int = 0, _prompt: str = "",
     return _get
                 
 
-
 def _mkdir(_path: str) -> bool:
     """
     逐级创建目录 _path
@@ -93,7 +93,8 @@ def _mkdir(_path: str) -> bool:
         if not exists(path=_path_temp):
             try:
                 mkdir(_path_temp)
-            except:
+
+            except FileNotFoundError:
                 result = False
                 break
 

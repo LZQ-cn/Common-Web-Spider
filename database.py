@@ -1,5 +1,5 @@
 from typing import Any
-from sqlite3 import connect, Connection, Cursor
+from sqlite3 import connect, Connection, Cursor, OperationalError
 
 
 def to_db(_str: str) -> str:
@@ -22,15 +22,15 @@ class DataBaseSetter:
         此过程将会连接到路径为 _path 的数据库, 并且建立游标
         """
         self.__connected: bool = False  # 是否已经连接到数据库
-        self.__path: str = None         # 数据库路径
+        self.__path: str = ...          # 数据库路径
 
-        self.__con: Connection = None   # 数据库连接
-        self.__cur: Cursor = None       # 数据库游标
+        self.__con: Connection = ...   # 数据库连接
+        self.__cur: Cursor = ...       # 数据库游标
 
-        self.__history: dict = dict()   # 执行的命令历史 (格式: {"命令": 是否成功, "命令": 是否成功})
+        self.__history: dict = dict()  # 执行的命令历史 (格式: {"命令": 是否成功, "命令": 是否成功})
 
         if _path:
-            self.open_db(_path=_path)       # 连接到数据库
+            self.open_db(_path=_path)  # 连接到数据库
 
     def open_db(self, _path: str) -> None:
         """
@@ -44,14 +44,14 @@ class DataBaseSetter:
         当您要连接数据库, 且不是当前连接到的数据库, 则会现保存更改并关闭线连接的数据库, 再进行连接
         """
         _path: str = to_db(_str=_path)
-        _con: Connection = None
+        _con: Connection
 
         if _path == self.__path:
             return
 
         try:
             _con = connect(_path)
-        except:
+        except OperationalError:
             return
         else:
             if self.__connected:
@@ -78,8 +78,8 @@ class DataBaseSetter:
         self.__cur.close()
         self.__con.close()
 
-        self.__path = None
-        self.__connected = False
+        self.__path = ...
+        self.__connected = ...
 
     def execute(self, _command: str) -> Any:
         """
@@ -87,7 +87,7 @@ class DataBaseSetter:
 
         返回: 当执行成功, 返回True; 当执行失败, 返回失败原因; 当当前未连接到数据库, 返回False
         """
-        result: Any = None
+        result: Any
 
         if self.__connected:
             try:
@@ -98,9 +98,9 @@ class DataBaseSetter:
                 result = True
 
             self.__history[_command] = result if isinstance(result, bool) else False
-       
+
         else:
-           result = False
+            result = False
 
         return result
 
@@ -124,15 +124,15 @@ class DataBaseSetter:
 
         当 self.__connected 为 False 时(即没有连接到数据库), 或提交失败则返回 False, 成功返回 True
         """
-        _status: bool = None
+        _status: bool
 
         if not self.__connected:
             _status = False
 
         else:
             try:
-                self.__con.commit()  
-            except:
+                self.__con.commit()
+            except OperationalError:
                 _status = False
             else:
                 _status = True
@@ -140,6 +140,7 @@ class DataBaseSetter:
         return _status
 
     """ self.__history """
+
     @property
     def history(self) -> dict:
         return self.__history
@@ -147,6 +148,7 @@ class DataBaseSetter:
     """ END """
 
     """ self.__path """
+
     @property
     def path(self) -> str:
         return self.__path
@@ -154,6 +156,7 @@ class DataBaseSetter:
     """ END """
 
     """ self.__connected """
+
     @property
     def connected(self) -> bool:
         return self.__connected
